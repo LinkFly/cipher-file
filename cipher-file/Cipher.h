@@ -6,6 +6,7 @@
 #include "error.h"
 #include "compatible-layer.h"
 #include "sha256.h"
+#include "config.h"
 
 #include <iostream>
 #include <vector>
@@ -64,7 +65,7 @@ struct Cipher {
 	string file;
 	fstream finout;
 	size_t len;
-	size_t bufSize = 4096;
+	size_t bufSize = BUFFER_SIZE;
 	Cipher(const string& file, const string& key) : header{ key }, file{ file } {
 		openFileForReadWrite(file, finout, len);
 	}
@@ -123,13 +124,22 @@ public:
 
 	void cipherFile() {
 		if (len > 0) {
-			vector<uint8_t> data(len);
-			readData(finout, data, 0, len, 0, len);
-			cipherData(data);
-			// Write
-			writeData(data, finout, 0, data.size(), 0);
-			/*finout.flush();
-			exit(0);*/
+			vector<uint8_t> data(bufSize);
+			for(size_t i = 0; i < len - bufSize; i += bufSize) {
+				readData(finout, data, 0, bufSize, i, bufSize);
+				cipherData(data);
+				writeData(data, finout, 0, bufSize, i);
+			}
+			auto wholeParts = bufSize * (len / bufSize);
+			auto restSize = len - wholeParts;
+			if (restSize != 0) {
+				vector<uint8_t> data(restSize);
+				readData(finout, data, 0, restSize, wholeParts, restSize);
+				cipherData(data);
+				writeData(data, finout, 0, data.size(), wholeParts);
+			}
+
+			
 		}
 
 		header.cipherUncipherKeyHash();
@@ -154,13 +164,24 @@ public:
 
 		// Load data
 		auto dataSz = len - headerSz;
-		vector<uint8_t> dataBytes(dataSz);
-		readData(finout, dataBytes, 0, dataSz, 0, dataSz);
-		uncipherData(dataBytes);
-
-		// Write
-		if (!dataBytes.empty())
-			writeData(dataBytes, finout, 0, dataSz, 0);
+		vector<uint8_t> dataBytes(bufSize);
+		for (size_t i = 0; i < dataSz - bufSize; i += bufSize) {
+			readData(finout, dataBytes, 0, bufSize, i, bufSize);
+			uncipherData(dataBytes);
+			// Write
+			//if (!dataBytes.empty())
+			writeData(dataBytes, finout, 0, bufSize, i);
+		}
+		auto wholeParts = bufSize * (dataSz / bufSize);
+		auto restSize = dataSz - wholeParts;
+		if (restSize != 0) {
+			vector<uint8_t> dataBytes(restSize);
+			readData(finout, dataBytes, 0, restSize, wholeParts, restSize);
+			uncipherData(dataBytes);
+			// Write
+			//if (!dataBytes.empty())
+			writeData(dataBytes, finout, 0, restSize, wholeParts);
+		}
 		auto newSz = len - header.size();
 		truncate(file.c_str(), newSz);
 	}
