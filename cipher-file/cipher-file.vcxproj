@@ -139,11 +139,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Cipher.cpp" />
+    <ClCompile Include="CipherHeader.cpp" />
+    <ClCompile Include="error.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="parse-args.cpp" />
     <ClCompile Include="sha256.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cipher.h" />
+    <ClInclude Include="CipherHeader.h" />
     <ClInclude Include="compatible-layer.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="error.h" />

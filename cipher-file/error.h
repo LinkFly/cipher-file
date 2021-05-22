@@ -5,7 +5,4 @@
 
 using namespace std;
 
-void error(const string& msg) {
-	cout << msg << endl;
-	exit(-1);
-}
+void error(const string& msg);
