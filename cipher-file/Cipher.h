@@ -125,10 +125,12 @@ public:
 	void cipherFile() {
 		if (len > 0) {
 			vector<uint8_t> data(bufSize);
-			for(size_t i = 0; i < len - bufSize; i += bufSize) {
-				readData(finout, data, 0, bufSize, i, bufSize);
-				cipherData(data);
-				writeData(data, finout, 0, bufSize, i);
+			if (bufSize <= len) {
+				for (size_t i = 0; i < len - bufSize; i += bufSize) {
+					readData(finout, data, 0, bufSize, i, bufSize);
+					cipherData(data);
+					writeData(data, finout, 0, bufSize, i);
+				}
 			}
 			auto wholeParts = bufSize * (len / bufSize);
 			auto restSize = len - wholeParts;
@@ -138,8 +140,6 @@ public:
 				cipherData(data);
 				writeData(data, finout, 0, data.size(), wholeParts);
 			}
-
-			
 		}
 
 		header.cipherUncipherKeyHash();
@@ -165,12 +165,12 @@ public:
 		// Load data
 		auto dataSz = len - headerSz;
 		vector<uint8_t> dataBytes(bufSize);
-		for (size_t i = 0; i < dataSz - bufSize; i += bufSize) {
-			readData(finout, dataBytes, 0, bufSize, i, bufSize);
-			uncipherData(dataBytes);
-			// Write
-			//if (!dataBytes.empty())
-			writeData(dataBytes, finout, 0, bufSize, i);
+		if (bufSize <= dataSz) {
+			for (size_t i = 0; i < dataSz - bufSize; i += bufSize) {
+				readData(finout, dataBytes, 0, bufSize, i, bufSize);
+				uncipherData(dataBytes);
+				writeData(dataBytes, finout, 0, bufSize, i);
+			}
 		}
 		auto wholeParts = bufSize * (dataSz / bufSize);
 		auto restSize = dataSz - wholeParts;
@@ -178,8 +178,6 @@ public:
 			vector<uint8_t> dataBytes(restSize);
 			readData(finout, dataBytes, 0, restSize, wholeParts, restSize);
 			uncipherData(dataBytes);
-			// Write
-			//if (!dataBytes.empty())
 			writeData(dataBytes, finout, 0, restSize, wholeParts);
 		}
 		auto newSz = len - header.size();
